@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake - Daily Fun Game</title>
+<style>
+  body {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    color: #eee;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  h1 { margin: 10px; text-shadow: 0 0 10px #0f0; }
+  #gameCanvas {
+    border: 4px solid #0f0;
+    border-radius: 8px;
+    box-shadow: 0 0 20px #0f0;
+    background: #000;
+  }
+  #score { font-size: 1.5em; margin: 10px; }
+  button {
+    margin: 10px;
+    padding: 10px 20px;
+    font-size: 1.1em;
+    background: #0f0;
+    color: #000;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  button:hover { background: #0c0; }
+  .controls { text-align: center; margin-top: 10px; opacity: 0.7; }
+</style>
+</head>
+<body>
+  <h1>🐍 Classic Snake</h1>
+  <div id="score">Score: 0</div>
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+  <button id="restartBtn">Restart</button>
+  <div class="controls">Arrow keys or WASD to move • Don't hit walls or yourself!</div>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const restartBtn = document.getElementById('restartBtn');
+
+const gridSize = 20;
+const tileCount = canvas.width / gridSize;
+
+let snake = [{x: 10, y: 10}];
+let dx = 0;
+let dy = 0;
+let food = {x: 15, y: 15};
+let score = 0;
+let gameLoop;
+let gameRunning = false;
+
+function draw() {
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Food
+  ctx.fillStyle = '#f00';
+  ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+
+  // Snake
+  snake.forEach((segment, i) => {
+    ctx.fillStyle = i === 0 ? '#0f0' : '#0a0';
+    ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
+  });
+}
+
+function update() {
+  if (!gameRunning) return;
+
+  const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+
+  // Wall collision
+  if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+    gameOver();
+    return;
+  }
+
+  // Self collision
+  if (snake.some(seg => seg.x === head.x && seg.y === head.y)) {
+    gameOver();
+    return;
+  }
+
+  snake.unshift(head);
+
+  // Eat food
+  if (head.x === food.x && head.y === food.y) {
+    score += 10;
+    scoreEl.textContent = `Score: ${score}`;
+    placeFood();
+  } else {
+    snake.pop();
+  }
+}
+
+function placeFood() {
+  food = {
+    x: Math.floor(Math.random() * tileCount),
+    y: Math.floor(Math.random() * tileCount)
+  };
+  // Avoid placing on snake
+  if (snake.some(seg => seg.x === food.x && seg.y === food.y)) placeFood();
+}
+
+function gameOver() {
+  gameRunning = false;
+  clearInterval(gameLoop);
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#fff';
+  ctx.font = '30px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('Game Over!', canvas.width/2, canvas.height/2 - 10);
+  ctx.font = '20px Arial';
+  ctx.fillText(`Score: ${score}`, canvas.width/2, canvas.height/2 + 20);
+}
+
+function startGame() {
+  snake = [{x: 10, y: 10}];
+  dx = 1;
+  dy = 0;
+  score = 0;
+  scoreEl.textContent = 'Score: 0';
+  placeFood();
+  gameRunning = true;
+  if (gameLoop) clearInterval(gameLoop);
+  gameLoop = setInterval(() => {
+    update();
+    draw();
+  }, 100);
+}
+
+document.addEventListener('keydown', e => {
+  switch(e.key) {
+    case 'ArrowUp':
+    case 'w':
+    case 'W':
+      if (dy !== 1) { dx = 0; dy = -1; }
+      break;
+    case 'ArrowDown':
+    case 's':
+    case 'S':
+      if (dy !== -1) { dx = 0; dy = 1; }
+      break;
+    case 'ArrowLeft':
+    case 'a':
+    case 'A':
+      if (dx !== 1) { dx = -1; dy = 0; }
+      break;
+    case 'ArrowRight':
+    case 'd':
+    case 'D':
+      if (dx !== -1) { dx = 1; dy = 0; }
+      break;
+  }
+});
+
+restartBtn.addEventListener('click', startGame);
+
+startGame();
+draw();
+</script>
+</body>
+</html>
