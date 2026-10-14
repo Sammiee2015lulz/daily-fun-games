@@ -2,16 +2,21 @@
 
 A new fun and cool browser game every day, crafted by Grok!
 
-## Today's Game: Classic Snake 🐍
+## Today's Game: Neon Dodger 🚀
 
-Play the classic Snake game right in your browser.
+Dodge colorful meteors in this neon-styled arcade game!
 
 ### How to Play
-- Use **Arrow keys** or **WASD** to move
-- Eat the red food to grow and score points
-- Don't hit the walls or yourself!
+- Use **Left/Right arrows** or **A/D** to move your ship
+- Avoid the falling meteors
+- Survive as long as you can to get a high score
+- High score is saved locally
 
-Open `snake/index.html` to play (or serve the folder with a local server).
+Open `neon-dodger/index.html` in your browser to play.
 
 ---
+
+### Previous Games
+- Classic Snake 🐍 in `snake/`
+
 *Games are added daily. Stay tuned for more!*

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Neon Dodger - Daily Fun Game</title>
+<style>
+body {
+  margin: 0;
+  background: #0a0a1a;
+  color: #0ff;
+  font-family: 'Courier New', monospace;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  overflow: hidden;
+}
+canvas {
+  border: 2px solid #0ff;
+  box-shadow: 0 0 20px #0ff, 0 0 40px #0ff inset;
+  background: radial-gradient(circle, #111133 0%, #000 70%);
+}
+#ui {
+  margin-top: 10px;
+  text-align: center;
+  text-shadow: 0 0 10px #0ff;
+}
+button {
+  background: #000;
+  color: #0ff;
+  border: 1px solid #0ff;
+  padding: 10px 20px;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 0 10px #0ff;
+}
+button:hover {
+  background: #0ff;
+  color: #000;
+}
+</style>
+</head>
+<body>
+<canvas id="game" width="600" height="400"></canvas>
+<div id="ui">
+  <h1>🚀 Neon Dodger</h1>
+  <p>Score: <span id="score">0</span> | High: <span id="high">0</span></p>
+  <p>Use ← → or A D to move | Avoid the meteors!</p>
+  <button onclick="startGame()">Start / Restart</button>
+</div>
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const highEl = document.getElementById('high');
+
+let gameRunning = false;
+let score = 0;
+let highScore = localStorage.getItem('neonDodgerHigh') || 0;
+highEl.textContent = highScore;
+
+const player = {
+  x: canvas.width / 2 - 15,
+  y: canvas.height - 50,
+  w: 30,
+  h: 30,
+  speed: 6,
+  color: '#0ff'
+};
+
+let obstacles = [];
+let particles = [];
+let keys = {};
+let frame = 0;
+
+document.addEventListener('keydown', e => keys[e.key] = true);
+document.addEventListener('keyup', e => keys[e.key] = false);
+
+function spawnObstacle() {
+  obstacles.push({
+    x: Math.random() * (canvas.width - 40),
+    y: -40,
+    w: 20 + Math.random() * 30,
+    h: 20 + Math.random() * 30,
+    speed: 2 + Math.random() * 3 + score / 100,
+    color: `hsl(${Math.random()*360}, 100%, 50%)`
+  });
+}
+
+function createParticles(x, y, color) {
+  for (let i = 0; i < 10; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 8,
+      vy: (Math.random() - 0.5) * 8,
+      life: 30,
+      color
+    });
+  }
+}
+
+function update() {
+  if (!gameRunning) return;
+
+  // Player movement
+  if (keys['ArrowLeft'] || keys['a'] || keys['A']) player.x -= player.speed;
+  if (keys['ArrowRight'] || keys['d'] || keys['D']) player.x += player.speed;
+  player.x = Math.max(0, Math.min(canvas.width - player.w, player.x));
+
+  // Spawn obstacles
+  if (frame % 40 === 0) spawnObstacle();
+
+  // Update obstacles
+  obstacles.forEach(o => o.y += o.speed);
+  obstacles = obstacles.filter(o => o.y < canvas.height + 50);
+
+  // Collision
+  for (let o of obstacles) {
+    if (player.x < o.x + o.w && player.x + player.w > o.x &&
+        player.y < o.y + o.h && player.y + player.h > o.y) {
+      gameOver();
+      return;
+    }
+  }
+
+  // Particles
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+  });
+  particles = particles.filter(p => p.life > 0);
+
+  score++;
+  scoreEl.textContent = score;
+  if (score > highScore) {
+    highScore = score;
+    highEl.textContent = highScore;
+    localStorage.setItem('neonDodgerHigh', highScore);
+  }
+
+  frame++;
+}
+
+function draw() {
+  ctx.fillStyle = 'rgba(10, 10, 26, 0.3)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Player
+  ctx.fillStyle = player.color;
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = player.color;
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+  ctx.shadowBlur = 0;
+
+  // Obstacles
+  obstacles.forEach(o => {
+    ctx.fillStyle = o.color;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = o.color;
+    ctx.fillRect(o.x, o.y, o.w, o.h);
+  });
+  ctx.shadowBlur = 0;
+
+  // Particles
+  particles.forEach(p => {
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.life / 30;
+    ctx.fillRect(p.x, p.y, 4, 4);
+  });
+  ctx.globalAlpha = 1;
+}
+
+function gameLoop() {
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+function startGame() {
+  gameRunning = true;
+  score = 0;
+  obstacles = [];
+  particles = [];
+  frame = 0;
+  player.x = canvas.width / 2 - 15;
+  scoreEl.textContent = 0;
+}
+
+function gameOver() {
+  gameRunning = false;
+  createParticles(player.x + 15, player.y + 15, '#ff0');
+  alert(`Game Over! Score: ${score}`);
+}
+
+gameLoop();
+</script>
+</body>
+</html>
