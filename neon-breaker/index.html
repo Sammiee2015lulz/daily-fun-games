@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Neon Breaker - Daily Fun Game</title>
+<style>
+body {
+  margin: 0;
+  background: #0a0a1a;
+  color: #0ff;
+  font-family: 'Courier New', monospace;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  overflow: hidden;
+}
+canvas {
+  border: 2px solid #0ff;
+  box-shadow: 0 0 20px #0ff, 0 0 40px #0ff inset;
+  background: radial-gradient(circle, #111133 0%, #000 70%);
+}
+#ui {
+  margin-top: 10px;
+  text-align: center;
+  text-shadow: 0 0 10px #0ff;
+}
+button {
+  background: #000;
+  color: #0ff;
+  border: 1px solid #0ff;
+  padding: 10px 20px;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 0 10px #0ff;
+}
+button:hover {
+  background: #0ff;
+  color: #000;
+}
+</style>
+</head>
+<body>
+<canvas id="game" width="600" height="400"></canvas>
+<div id="ui">
+  <h1>🧱 Neon Breaker</h1>
+  <p>Score: <span id="score">0</span> | High: <span id="high">0</span> | Lives: <span id="lives">3</span></p>
+  <p>Use ← → or A D to move paddle | Bounce the ball to break bricks!</p>
+  <button onclick="startGame()">Start / Restart</button>
+</div>
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const highEl = document.getElementById('high');
+const livesEl = document.getElementById('lives');
+
+let gameRunning = false;
+let score = 0;
+let lives = 3;
+let highScore = localStorage.getItem('neonBreakerHigh') || 0;
+highEl.textContent = highScore;
+
+const paddle = { x: canvas.width/2 - 50, y: canvas.height - 30, w: 100, h: 15, speed: 7, color: '#0ff' };
+const ball = { x: canvas.width/2, y: canvas.height/2, r: 8, dx: 4, dy: -4, color: '#ff0' };
+
+let bricks = [];
+const brickRowCount = 5;
+const brickColumnCount = 8;
+const brickWidth = 65;
+const brickHeight = 20;
+const brickPadding = 10;
+const brickOffsetTop = 40;
+const brickOffsetLeft = 30;
+
+let particles = [];
+let keys = {};
+
+function initBricks() {
+  bricks = [];
+  for (let c = 0; c < brickColumnCount; c++) {
+    bricks[c] = [];
+    for (let r = 0; r < brickRowCount; r++) {
+      bricks[c][r] = { x: 0, y: 0, status: 1, color: `hsl(${(c+r)*30 % 360}, 100%, 50%)` };
+    }
+  }
+}
+
+document.addEventListener('keydown', e => keys[e.key] = true);
+document.addEventListener('keyup', e => keys[e.key] = false);
+
+function createParticles(x, y, color) {
+  for (let i = 0; i < 8; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 6,
+      vy: (Math.random() - 0.5) * 6,
+      life: 25,
+      color
+    });
+  }
+}
+
+function collisionDetection() {
+  for (let c = 0; c < brickColumnCount; c++) {
+    for (let r = 0; r < brickRowCount; r++) {
+      let b = bricks[c][r];
+      if (b.status === 1) {
+        if (ball.x > b.x && ball.x < b.x + brickWidth && ball.y > b.y && ball.y < b.y + brickHeight) {
+          ball.dy = -ball.dy;
+          b.status = 0;
+          score += 10;
+          scoreEl.textContent = score;
+          createParticles(b.x + brickWidth/2, b.y + brickHeight/2, b.color);
+          if (score > highScore) {
+            highScore = score;
+            highEl.textContent = highScore;
+            localStorage.setItem('neonBreakerHigh', highScore);
+          }
+          // Check win
+          let remaining = 0;
+          bricks.forEach(col => col.forEach(br => { if (br.status) remaining++; }));
+          if (remaining === 0) {
+            alert('You Win! Score: ' + score);
+            gameRunning = false;
+          }
+        }
+      }
+    }
+  }
+}
+
+function update() {
+  if (!gameRunning) return;
+
+  // Paddle
+  if (keys['ArrowLeft'] || keys['a'] || keys['A']) paddle.x -= paddle.speed;
+  if (keys['ArrowRight'] || keys['d'] || keys['D']) paddle.x += paddle.speed;
+  paddle.x = Math.max(0, Math.min(canvas.width - paddle.w, paddle.x));
+
+  // Ball
+  ball.x += ball.dx;
+  ball.y += ball.dy;
+
+  // Walls
+  if (ball.x + ball.r > canvas.width || ball.x - ball.r < 0) ball.dx = -ball.dx;
+  if (ball.y - ball.r < 0) ball.dy = -ball.dy;
+
+  // Paddle collision
+  if (ball.y + ball.r > paddle.y && ball.x > paddle.x && ball.x < paddle.x + paddle.w) {
+    ball.dy = -Math.abs(ball.dy);
+    // Angle based on hit position
+    let hitPos = (ball.x - (paddle.x + paddle.w/2)) / (paddle.w/2);
+    ball.dx = hitPos * 5;
+  }
+
+  // Bottom
+  if (ball.y + ball.r > canvas.height) {
+    lives--;
+    livesEl.textContent = lives;
+    if (lives <= 0) {
+      gameOver();
+      return;
+    } else {
+      // Reset ball
+      ball.x = canvas.width/2;
+      ball.y = canvas.height/2;
+      ball.dx = 4 * (Math.random() > 0.5 ? 1 : -1);
+      ball.dy = -4;
+    }
+  }
+
+  collisionDetection();
+
+  // Particles
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+  });
+  particles = particles.filter(p => p.life > 0);
+}
+
+function drawBricks() {
+  for (let c = 0; c < brickColumnCount; c++) {
+    for (let r = 0; r < brickRowCount; r++) {
+      if (bricks[c][r].status === 1) {
+        let brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
+        let brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
+        bricks[c][r].x = brickX;
+        bricks[c][r].y = brickY;
+        ctx.fillStyle = bricks[c][r].color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = bricks[c][r].color;
+        ctx.fillRect(brickX, brickY, brickWidth, brickHeight);
+      }
+    }
+  }
+  ctx.shadowBlur = 0;
+}
+
+function draw() {
+  ctx.fillStyle = 'rgba(10, 10, 26, 0.4)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  drawBricks();
+
+  // Paddle
+  ctx.fillStyle = paddle.color;
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = paddle.color;
+  ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+  ctx.shadowBlur = 0;
+
+  // Ball
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+  ctx.fillStyle = ball.color;
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = ball.color;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Particles
+  particles.forEach(p => {
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.life / 25;
+    ctx.fillRect(p.x, p.y, 3, 3);
+  });
+  ctx.globalAlpha = 1;
+}
+
+function gameLoop() {
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+function startGame() {
+  gameRunning = true;
+  score = 0;
+  lives = 3;
+  scoreEl.textContent = 0;
+  livesEl.textContent = 3;
+  initBricks();
+  ball.x = canvas.width / 2;
+  ball.y = canvas.height / 2;
+  ball.dx = 4;
+  ball.dy = -4;
+  paddle.x = canvas.width/2 - 50;
+  particles = [];
+}
+
+function gameOver() {
+  gameRunning = false;
+  alert(`Game Over! Score: ${score}`);
+}
+
+initBricks();
+gameLoop();
+</script>
+</body>
+</html>
