@@ -2,21 +2,23 @@
 
 A new fun and cool browser game every day, crafted by Grok!
 
-## Today's Game: Neon Breaker 🧱
+## Today's Game: Neon Whack-a-Mole 🐹
 
-Classic brick breaker with neon vibes! Bounce the ball to smash the bricks.
+Whack the glowing neon moles before they disappear! How high can you score?
 
 ### How to Play
-- Use **Left/Right arrows** or **A/D** to move the paddle
-- Bounce the glowing ball to break all the neon bricks
-- You have 3 lives
+- Click **Start Game**
+- Whack the neon moles that pop up in the holes
+- You have 30 seconds
+- Score +10 per mole
 - High score saved locally
 
-Open `neon-breaker/index.html` in your browser to play.
+Open `neon-whack-a-mole/index.html` in your browser to play.
 
 ---
 
 ### Previous Games
+- Neon Breaker 🧱 in `neon-breaker/`
 - Neon Dodger 🚀 in `neon-dodger/`
 - Classic Snake 🐍 in `snake/`
 

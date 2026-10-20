@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Neon Whack-a-Mole</title>
+<style>
+  body {
+    margin: 0;
+    background: #0a0a0a;
+    color: #0ff;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    text-shadow: 0 0 10px #0ff;
+  }
+  h1 { font-size: 2.5em; margin: 20px; }
+  #scoreboard { font-size: 1.5em; margin: 10px; }
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 15px;
+    margin: 20px;
+  }
+  .hole {
+    width: 100px;
+    height: 100px;
+    background: #111;
+    border: 2px solid #0ff;
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 0 15px #0ff, inset 0 0 15px #000;
+    cursor: pointer;
+  }
+  .mole {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    background: radial-gradient(circle, #f0f, #0ff);
+    border-radius: 50%;
+    top: 15px;
+    left: 15px;
+    display: none;
+    box-shadow: 0 0 20px #f0f;
+    animation: pop 0.3s ease;
+  }
+  @keyframes pop {
+    0% { transform: scale(0); }
+    100% { transform: scale(1); }
+  }
+  button {
+    background: #000;
+    color: #0ff;
+    border: 2px solid #0ff;
+    padding: 10px 20px;
+    font-size: 1.2em;
+    cursor: pointer;
+    margin: 10px;
+    box-shadow: 0 0 10px #0ff;
+  }
+  button:hover { background: #0ff; color: #000; }
+  #game-over {
+    display: none;
+    font-size: 2em;
+    color: #f0f;
+    text-shadow: 0 0 15px #f0f;
+  }
+</style>
+</head>
+<body>
+  <h1>Neon Whack-a-Mole 🐹</h1>
+  <div id="scoreboard">Score: 0 | Time: 30s</div>
+  <div id="grid"></div>
+  <button id="start">Start Game</button>
+  <div id="game-over">Game Over! Final Score: <span id="final"></span></div>
+  <script>
+    const grid = document.getElementById('grid');
+    const scoreboard = document.getElementById('scoreboard');
+    const startBtn = document.getElementById('start');
+    const gameOver = document.getElementById('game-over');
+    const finalScore = document.getElementById('final');
+    let score = 0;
+    let timeLeft = 30;
+    let timer;
+    let moleTimer;
+    let activeMole = null;
+
+    // Create holes
+    for (let i = 0; i < 9; i++) {
+      const hole = document.createElement('div');
+      hole.className = 'hole';
+      const mole = document.createElement('div');
+      mole.className = 'mole';
+      hole.appendChild(mole);
+      hole.addEventListener('click', () => whack(mole));
+      grid.appendChild(hole);
+    }
+    const moles = document.querySelectorAll('.mole');
+
+    function startGame() {
+      score = 0;
+      timeLeft = 30;
+      gameOver.style.display = 'none';
+      startBtn.disabled = true;
+      updateScore();
+      timer = setInterval(() => {
+        timeLeft--;
+        updateScore();
+        if (timeLeft <= 0) endGame();
+      }, 1000);
+      showMole();
+    }
+
+    function showMole() {
+      if (activeMole) activeMole.style.display = 'none';
+      const index = Math.floor(Math.random() * 9);
+      activeMole = moles[index];
+      activeMole.style.display = 'block';
+      moleTimer = setTimeout(showMole, 800 + Math.random() * 400);
+    }
+
+    function whack(mole) {
+      if (mole.style.display === 'block') {
+        score += 10;
+        mole.style.display = 'none';
+        activeMole = null;
+        updateScore();
+      }
+    }
+
+    function updateScore() {
+      scoreboard.textContent = `Score: ${score} | Time: ${timeLeft}s`;
+    }
+
+    function endGame() {
+      clearInterval(timer);
+      clearTimeout(moleTimer);
+      if (activeMole) activeMole.style.display = 'none';
+      startBtn.disabled = false;
+      finalScore.textContent = score;
+      gameOver.style.display = 'block';
+      // Save high score
+      const high = localStorage.getItem('neonWhackHigh') || 0;
+      if (score > high) localStorage.setItem('neonWhackHigh', score);
+    }
+
+    startBtn.addEventListener('click', startGame);
+  </script>
+</body>
+</html>
