@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Neon Memory Match</title>
+<style>
+  body {
+    margin: 0;
+    background: #0a0a0a;
+    color: #0ff;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    text-shadow: 0 0 10px #0ff;
+  }
+  h1 { font-size: 2.5em; margin: 20px; }
+  #stats { font-size: 1.3em; margin: 10px; }
+  #board {
+    display: grid;
+    grid-template-columns: repeat(4, 80px);
+    gap: 10px;
+    margin: 20px;
+  }
+  .card {
+    width: 80px;
+    height: 80px;
+    background: #111;
+    border: 2px solid #0ff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2em;
+    cursor: pointer;
+    box-shadow: 0 0 10px #0ff, inset 0 0 10px #000;
+    transition: transform 0.3s, background 0.3s;
+    user-select: none;
+  }
+  .card.flipped {
+    background: #222;
+    transform: rotateY(180deg);
+    color: #f0f;
+    text-shadow: 0 0 15px #f0f;
+  }
+  .card.matched {
+    border-color: #0f0;
+    box-shadow: 0 0 15px #0f0;
+    cursor: default;
+  }
+  button {
+    background: #000;
+    color: #0ff;
+    border: 2px solid #0ff;
+    padding: 10px 20px;
+    font-size: 1.2em;
+    cursor: pointer;
+    margin: 10px;
+    box-shadow: 0 0 10px #0ff;
+  }
+  button:hover { background: #0ff; color: #000; }
+  #win { display: none; font-size: 1.8em; color: #f0f; text-shadow: 0 0 15px #f0f; margin: 10px; }
+</style>
+</head>
+<body>
+  <h1>Neon Memory Match 🧠</h1>
+  <div id="stats">Moves: 0 | Matches: 0/8</div>
+  <div id="board"></div>
+  <button id="restart">Restart</button>
+  <div id="win">You Win! 🎉</div>
+  <script>
+    const board = document.getElementById('board');
+    const stats = document.getElementById('stats');
+    const restartBtn = document.getElementById('restart');
+    const winMsg = document.getElementById('win');
+    const symbols = ['🚀', '⭐', '💎', '🔥', '⚡', '🎯', '🎮', '💡'];
+    let cards = [];
+    let flipped = [];
+    let moves = 0;
+    let matches = 0;
+    let lock = false;
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function createBoard() {
+      board.innerHTML = '';
+      cards = shuffle([...symbols, ...symbols]);
+      flipped = [];
+      moves = 0;
+      matches = 0;
+      lock = false;
+      winMsg.style.display = 'none';
+      updateStats();
+      cards.forEach((sym, i) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.symbol = sym;
+        card.dataset.index = i;
+        card.addEventListener('click', () => flipCard(card));
+        board.appendChild(card);
+      });
+    }
+
+    function flipCard(card) {
+      if (lock || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+      card.classList.add('flipped');
+      card.textContent = card.dataset.symbol;
+      flipped.push(card);
+      if (flipped.length === 2) {
+        moves++;
+        updateStats();
+        lock = true;
+        checkMatch();
+      }
+    }
+
+    function checkMatch() {
+      const [c1, c2] = flipped;
+      if (c1.dataset.symbol === c2.dataset.symbol) {
+        c1.classList.add('matched');
+        c2.classList.add('matched');
+        matches++;
+        updateStats();
+        flipped = [];
+        lock = false;
+        if (matches === 8) winMsg.style.display = 'block';
+      } else {
+        setTimeout(() => {
+          c1.classList.remove('flipped');
+          c2.classList.remove('flipped');
+          c1.textContent = '';
+          c2.textContent = '';
+          flipped = [];
+          lock = false;
+        }, 1000);
+      }
+    }
+
+    function updateStats() {
+      stats.textContent = `Moves: ${moves} | Matches: ${matches}/8`;
+    }
+
+    restartBtn.addEventListener('click', createBoard);
+    createBoard();
+  </script>
+</body>
+</html>

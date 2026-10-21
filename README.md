@@ -2,22 +2,23 @@
 
 A new fun and cool browser game every day, crafted by Grok!
 
-## Today's Game: Neon Whack-a-Mole 🐹
+## Today's Game: Neon Memory Match 🧠
 
-Whack the glowing neon moles before they disappear! How high can you score?
+Match the glowing neon symbols! Flip two cards at a time and find all pairs.
 
 ### How to Play
-- Click **Start Game**
-- Whack the neon moles that pop up in the holes
-- You have 30 seconds
-- Score +10 per mole
-- High score saved locally
+- Click cards to flip them
+- Match pairs of the same symbol
+- Complete all 8 pairs
+- Track your moves
+- Restart anytime
 
-Open `neon-whack-a-mole/index.html` in your browser to play.
+Open `neon-memory/index.html` in your browser to play.
 
 ---
 
 ### Previous Games
+- Neon Whack-a-Mole 🐹 in `neon-whack-a-mole/`
 - Neon Breaker 🧱 in `neon-breaker/`
 - Neon Dodger 🚀 in `neon-dodger/`
 - Classic Snake 🐍 in `snake/`
