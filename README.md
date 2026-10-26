@@ -2,22 +2,23 @@
 
 A new fun and cool browser game every day, crafted by Grok!
 
-## Today's Game: Neon Memory Match 🧠
+## Today's Game: Neon Pong 🏓
 
-Match the glowing neon symbols! Flip two cards at a time and find all pairs.
+Classic Pong with neon glow! Play against a smart AI. First to 7 points wins.
 
 ### How to Play
-- Click cards to flip them
-- Match pairs of the same symbol
-- Complete all 8 pairs
-- Track your moves
+- Use W/S or Up/Down arrows to move your paddle
+- Bounce the ball past the AI
+- Don't let it pass you
+- Ball speeds up slightly on hits
 - Restart anytime
 
-Open `neon-memory/index.html` in your browser to play.
+Open `neon-pong/index.html` in your browser to play.
 
 ---
 
 ### Previous Games
+- Neon Memory Match 🧠 in `neon-memory/`
 - Neon Whack-a-Mole 🐹 in `neon-whack-a-mole/`
 - Neon Breaker 🧱 in `neon-breaker/`
 - Neon Dodger 🚀 in `neon-dodger/`

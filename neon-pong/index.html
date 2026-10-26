@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Pong - Daily Fun Game</title>
+<style>
+body {
+  margin: 0;
+  background: #0a0a1a;
+  color: #0ff;
+  font-family: 'Courier New', monospace;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  overflow: hidden;
+}
+canvas {
+  border: 2px solid #0ff;
+  box-shadow: 0 0 20px #0ff, 0 0 40px #0ff inset;
+  background: radial-gradient(circle, #111133 0%, #000 70%);
+}
+#ui {
+  margin-top: 10px;
+  text-align: center;
+  text-shadow: 0 0 10px #0ff;
+}
+button {
+  background: #000;
+  color: #0ff;
+  border: 1px solid #0ff;
+  padding: 10px 20px;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 0 10px #0ff;
+  margin: 5px;
+}
+button:hover {
+  background: #0ff;
+  color: #000;
+}
+</style>
+</head>
+<body>
+<canvas id="game" width="700" height="400"></canvas>
+<div id="ui">
+  <h1>🏓 Neon Pong</h1>
+  <p>You: <span id="playerScore">0</span> | AI: <span id="aiScore">0</span></p>
+  <p>W / S or ↑ / ↓ to move | First to 7 wins!</p>
+  <button onclick="startGame()">Start / Restart</button>
+</div>
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const playerScoreEl = document.getElementById('playerScore');
+const aiScoreEl = document.getElementById('aiScore');
+
+let gameRunning = false;
+let playerScore = 0;
+let aiScore = 0;
+
+const paddleWidth = 15;
+const paddleHeight = 80;
+const player = { x: 30, y: canvas.height / 2 - 40, dy: 0, speed: 6 };
+const ai = { x: canvas.width - 45, y: canvas.height / 2 - 40, dy: 0, speed: 4.5 };
+const ball = { x: canvas.width / 2, y: canvas.height / 2, r: 10, dx: 5, dy: 3 };
+
+let keys = {};
+let particles = [];
+
+document.addEventListener('keydown', e => keys[e.key] = true);
+document.addEventListener('keyup', e => keys[e.key] = false);
+
+function createParticles(x, y) {
+  for (let i = 0; i < 10; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 8,
+      vy: (Math.random() - 0.5) * 8,
+      life: 30,
+      color: '#0ff'
+    });
+  }
+}
+
+function update() {
+  if (!gameRunning) return;
+
+  // Player paddle
+  if (keys['w'] || keys['W'] || keys['ArrowUp']) player.dy = -player.speed;
+  else if (keys['s'] || keys['S'] || keys['ArrowDown']) player.dy = player.speed;
+  else player.dy = 0;
+
+  player.y += player.dy;
+  player.y = Math.max(0, Math.min(canvas.height - paddleHeight, player.y));
+
+  // AI paddle (simple tracking)
+  const aiCenter = ai.y + paddleHeight / 2;
+  if (ball.y < aiCenter - 10) ai.dy = -ai.speed;
+  else if (ball.y > aiCenter + 10) ai.dy = ai.speed;
+  else ai.dy = 0;
+
+  ai.y += ai.dy;
+  ai.y = Math.max(0, Math.min(canvas.height - paddleHeight, ai.y));
+
+  // Ball
+  ball.x += ball.dx;
+  ball.y += ball.dy;
+
+  // Top/bottom walls
+  if (ball.y - ball.r < 0 || ball.y + ball.r > canvas.height) {
+    ball.dy = -ball.dy;
+    createParticles(ball.x, ball.y);
+  }
+
+  // Player paddle collision
+  if (ball.x - ball.r < player.x + paddleWidth &&
+      ball.x + ball.r > player.x &&
+      ball.y > player.y &&
+      ball.y < player.y + paddleHeight) {
+    ball.dx = Math.abs(ball.dx);
+    let hitPos = (ball.y - (player.y + paddleHeight / 2)) / (paddleHeight / 2);
+    ball.dy = hitPos * 6;
+    ball.dx *= 1.05;
+    createParticles(ball.x, ball.y);
+  }
+
+  // AI paddle collision
+  if (ball.x + ball.r > ai.x &&
+      ball.x - ball.r < ai.x + paddleWidth &&
+      ball.y > ai.y &&
+      ball.y < ai.y + paddleHeight) {
+    ball.dx = -Math.abs(ball.dx);
+    let hitPos = (ball.y - (ai.y + paddleHeight / 2)) / (paddleHeight / 2);
+    ball.dy = hitPos * 6;
+    ball.dx *= 1.05;
+    createParticles(ball.x, ball.y);
+  }
+
+  // Score
+  if (ball.x < 0) {
+    aiScore++;
+    aiScoreEl.textContent = aiScore;
+    resetBall();
+    if (aiScore >= 7) endGame('AI wins!');
+  }
+  if (ball.x > canvas.width) {
+    playerScore++;
+    playerScoreEl.textContent = playerScore;
+    resetBall();
+    if (playerScore >= 7) endGame('You win!');
+  }
+
+  // Particles
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+  });
+  particles = particles.filter(p => p.life > 0);
+}
+
+function resetBall() {
+  ball.x = canvas.width / 2;
+  ball.y = canvas.height / 2;
+  ball.dx = (Math.random() > 0.5 ? 5 : -5);
+  ball.dy = (Math.random() - 0.5) * 6;
+}
+
+function draw() {
+  ctx.fillStyle = 'rgba(10, 10, 26, 0.3)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Center line
+  ctx.setLineDash([10, 10]);
+  ctx.strokeStyle = '#0ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(canvas.width / 2, 0);
+  ctx.lineTo(canvas.width / 2, canvas.height);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Player paddle
+  ctx.fillStyle = '#0f0';
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = '#0f0';
+  ctx.fillRect(player.x, player.y, paddleWidth, paddleHeight);
+  ctx.shadowBlur = 0;
+
+  // AI paddle
+  ctx.fillStyle = '#f0f';
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = '#f0f';
+  ctx.fillRect(ai.x, ai.y, paddleWidth, paddleHeight);
+  ctx.shadowBlur = 0;
+
+  // Ball
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+  ctx.fillStyle = '#ff0';
+  ctx.shadowBlur = 20;
+  ctx.shadowColor = '#ff0';
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Particles
+  particles.forEach(p => {
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.life / 30;
+    ctx.fillRect(p.x, p.y, 4, 4);
+  });
+  ctx.globalAlpha = 1;
+}
+
+function gameLoop() {
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+function startGame() {
+  gameRunning = true;
+  playerScore = 0;
+  aiScore = 0;
+  playerScoreEl.textContent = 0;
+  aiScoreEl.textContent = 0;
+  player.y = canvas.height / 2 - 40;
+  ai.y = canvas.height / 2 - 40;
+  resetBall();
+  particles = [];
+}
+
+function endGame(message) {
+  gameRunning = false;
+  alert(message + ' Score: You ' + playerScore + ' - AI ' + aiScore);
+}
+
+gameLoop();
+</script>
+</body>
+</html>
