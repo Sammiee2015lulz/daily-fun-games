@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Neon Flappy</title>
+<style>
+body { margin:0; background:#0a0a12; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial,sans-serif; color:#0ff; }
+canvas { border:2px solid #0ff; box-shadow:0 0 20px #0ff; background:#111; }
+#score { position:absolute; top:20px; font-size:24px; text-shadow:0 0 10px #0ff; }
+#msg { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:32px; text-align:center; text-shadow:0 0 15px #f0f; display:none; }
+</style>
+</head>
+<body>
+<div id="score">Score: 0</div>
+<div id="msg">Press Space or Click to Start<br>Avoid the pipes!</div>
+<canvas id="c" width="400" height="600"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const msg = document.getElementById('msg');
+
+let birdY = 300, birdV = 0, gravity = 0.5, jump = -8;
+let pipes = [], frame = 0, score = 0, running = false;
+
+function reset() {
+  birdY = 300; birdV = 0; pipes = []; score = 0; frame = 0; running = false;
+  scoreEl.textContent = 'Score: 0';
+  msg.style.display = 'block';
+}
+
+function drawBird() {
+  ctx.fillStyle = '#0ff';
+  ctx.shadowBlur = 15; ctx.shadowColor = '#0ff';
+  ctx.beginPath(); ctx.arc(80, birdY, 15, 0, Math.PI*2); ctx.fill();
+  ctx.shadowBlur = 0;
+}
+
+function drawPipes() {
+  ctx.fillStyle = '#f0f';
+  ctx.shadowBlur = 10; ctx.shadowColor = '#f0f';
+  pipes.forEach(p => {
+    ctx.fillRect(p.x, 0, 40, p.top);
+    ctx.fillRect(p.x, p.bottom, 40, 600 - p.bottom);
+  });
+  ctx.shadowBlur = 0;
+}
+
+function update() {
+  if (!running) return;
+  birdV += gravity; birdY += birdV;
+  if (birdY > 585 || birdY < 15) { running = false; msg.textContent = 'Game Over! Score: ' + score + '<br>Press Space'; msg.style.display='block'; }
+
+  if (frame % 90 === 0) {
+    let gap = 150, top = Math.random() * (400 - gap) + 50;
+    pipes.push({x:400, top:top, bottom:top+gap, passed:false});
+  }
+  pipes.forEach(p => {
+    p.x -= 3;
+    if (p.x + 40 < 0) pipes.shift();
+    if (!p.passed && p.x < 80) { score++; scoreEl.textContent = 'Score: ' + score; p.passed=true; }
+    if (80 + 15 > p.x && 80 - 15 < p.x + 40 && (birdY - 15 < p.top || birdY + 15 > p.bottom)) {
+      running = false; msg.textContent = 'Game Over! Score: ' + score + '<br>Press Space'; msg.style.display='block';
+    }
+  });
+  frame++;
+}
+
+function loop() {
+  ctx.clearRect(0,0,400,600);
+  drawPipes(); drawBird(); update();
+  requestAnimationFrame(loop);
+}
+loop();
+
+function start() {
+  if (!running) { if (msg.textContent.includes('Over')) reset(); running = true; msg.style.display='none'; }
+  birdV = jump;
+}
+document.addEventListener('keydown', e => { if (e.code==='Space') { e.preventDefault(); start(); } });
+canvas.addEventListener('click', start);
+canvas.addEventListener('touchstart', e => { e.preventDefault(); start(); });
+</script>
+</body>
+</html>

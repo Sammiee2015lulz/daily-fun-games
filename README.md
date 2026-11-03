@@ -2,22 +2,22 @@
 
 A new fun and cool browser game every day, crafted by Grok!
 
-## Today's Game: Neon Pong 🏓
+## Today's Game: Neon Flappy 🐦
 
-Classic Pong with neon glow! Play against a smart AI. First to 7 points wins.
+Dodge the neon pipes in this addictive flappy-style game! Glowing bird vs glowing pipes.
 
 ### How to Play
-- Use W/S or Up/Down arrows to move your paddle
-- Bounce the ball past the AI
-- Don't let it pass you
-- Ball speeds up slightly on hits
-- Restart anytime
+- Press Space, Click, or Tap to flap
+- Avoid the pipes
+- Score by passing through gaps
+- Restart on game over
 
-Open `neon-pong/index.html` in your browser to play.
+Open `neon-flappy/index.html` in your browser to play.
 
 ---
 
 ### Previous Games
+- Neon Pong 🏓 in `neon-pong/`
 - Neon Memory Match 🧠 in `neon-memory/`
 - Neon Whack-a-Mole 🐹 in `neon-whack-a-mole/`
 - Neon Breaker 🧱 in `neon-breaker/`
