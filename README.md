@@ -2,21 +2,22 @@
 
 A new fun and cool browser game every day, crafted by Grok!
 
-## Today's Game: Neon Flappy 🐦
+## Today's Game: Neon 2048 🔢✨
 
-Dodge the neon pipes in this addictive flappy-style game! Glowing bird vs glowing pipes.
+Merge the glowing tiles to reach 2048! Neon colors, smooth animations, and addictive gameplay.
 
 ### How to Play
-- Press Space, Click, or Tap to flap
-- Avoid the pipes
-- Score by passing through gaps
-- Restart on game over
+- Use Arrow Keys or Swipe to slide tiles
+- Merge matching numbers to score points
+- Reach the 2048 tile (or go beyond!)
+- New game anytime
 
-Open `neon-flappy/index.html` in your browser to play.
+Open `neon-2048/index.html` in your browser to play.
 
 ---
 
 ### Previous Games
+- Neon Flappy 🐦 in `neon-flappy/`
 - Neon Pong 🏓 in `neon-pong/`
 - Neon Memory Match 🧠 in `neon-memory/`
 - Neon Whack-a-Mole 🐹 in `neon-whack-a-mole/`
