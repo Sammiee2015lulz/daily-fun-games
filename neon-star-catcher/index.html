@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Neon Star Catcher</title>
+<style>
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #0a0015;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+canvas {
+  border: 2px solid #ff00ff;
+  box-shadow: 0 0 20px #ff00ff, inset 0 0 20px #00ffff;
+  background: radial-gradient(ellipse at center, #1a0033 0%, #000 70%);
+  border-radius: 10px;
+}
+#ui {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+  text-shadow: 0 0 10px #00ffff;
+}
+h1 {
+  margin: 0;
+  font-size: 2.5em;
+  background: linear-gradient(90deg, #ff00ff, #00ffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+#score, #lives, #highscore {
+  font-size: 1.2em;
+  margin: 5px;
+}
+#gameover {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  background: rgba(0,0,0,0.8);
+  padding: 40px;
+  border-radius: 20px;
+  border: 2px solid #ff00ff;
+  display: none;
+  pointer-events: all;
+}
+button {
+  background: linear-gradient(90deg, #ff00ff, #00ffff);
+  border: none;
+  padding: 15px 30px;
+  font-size: 1.2em;
+  color: #000;
+  border-radius: 30px;
+  cursor: pointer;
+  margin-top: 20px;
+  font-weight: bold;
+}
+button:hover {
+  transform: scale(1.05);
+}
+</style>
+</head>
+<body>
+<div id="ui">
+  <h1>✨ Neon Star Catcher ✨</h1>
+  <div id="score">Score: 0</div>
+  <div id="lives">Lives: 3</div>
+  <div id="highscore">High Score: 0</div>
+</div>
+<canvas id="game" width="800" height="600"></canvas>
+<div id="gameover">
+  <h2>Game Over!</h2>
+  <p>Final Score: <span id="finalscore">0</span></p>
+  <button onclick="restart()">Play Again</button>
+</div>
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const livesEl = document.getElementById('lives');
+const highscoreEl = document.getElementById('highscore');
+const gameoverEl = document.getElementById('gameover');
+const finalscoreEl = document.getElementById('finalscore');
+
+let score = 0;
+let lives = 3;
+let highscore = localStorage.getItem('neonStarHigh') || 0;
+let gameRunning = true;
+let particles = [];
+let orbs = [];
+let catcher = { x: 400, y: 550, width: 80, height: 15 };
+let spawnTimer = 0;
+let speed = 2;
+
+highscoreEl.textContent = `High Score: ${highscore}`;
+
+function createOrb() {
+  const types = [
+    { color: '#00ffff', points: 10, bad: false },
+    { color: '#ff00ff', points: 20, bad: false },
+    { color: '#ffff00', points: 30, bad: false },
+    { color: '#00ff00', points: 15, bad: false },
+    { color: '#ff0000', points: 0, bad: true }
+  ];
+  const type = types[Math.floor(Math.random() * types.length)];
+  orbs.push({
+    x: Math.random() * (canvas.width - 30) + 15,
+    y: -20,
+    radius: 12,
+    speed: speed + Math.random() * 2,
+    color: type.color,
+    points: type.points,
+    bad: type.bad
+  });
+}
+
+function createParticles(x, y, color) {
+  for (let i = 0; i < 15; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 8,
+      vy: (Math.random() - 0.5) * 8,
+      life: 30,
+      color
+    });
+  }
+}
+
+function update() {
+  if (!gameRunning) return;
+
+  spawnTimer++;
+  if (spawnTimer > 40 - Math.min(score / 50, 30)) {
+    createOrb();
+    spawnTimer = 0;
+  }
+
+  speed = 2 + score / 100;
+
+  // Update orbs
+  for (let i = orbs.length - 1; i >= 0; i--) {
+    const orb = orbs[i];
+    orb.y += orb.speed;
+
+    // Collision with catcher
+    if (orb.y + orb.radius > catcher.y &&
+        orb.y - orb.radius < catcher.y + catcher.height &&
+        orb.x > catcher.x - catcher.width/2 &&
+        orb.x < catcher.x + catcher.width/2) {
+      if (orb.bad) {
+        lives--;
+        createParticles(orb.x, orb.y, '#ff0000');
+        if (lives <= 0) {
+          gameOver();
+        }
+      } else {
+        score += orb.points;
+        createParticles(orb.x, orb.y, orb.color);
+        if (score > highscore) {
+          highscore = score;
+          localStorage.setItem('neonStarHigh', highscore);
+        }
+      }
+      orbs.splice(i, 1);
+      continue;
+    }
+
+    // Missed
+    if (orb.y > canvas.height + 20) {
+      if (!orb.bad) {
+        lives--;
+        if (lives <= 0) gameOver();
+      }
+      orbs.splice(i, 1);
+    }
+  }
+
+  // Particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+
+  scoreEl.textContent = `Score: ${score}`;
+  livesEl.textContent = `Lives: ${lives}`;
+  highscoreEl.textContent = `High Score: ${highscore}`;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Background stars
+  ctx.fillStyle = '#fff';
+  for (let i = 0; i < 50; i++) {
+    ctx.fillRect((i * 37) % canvas.width, (i * 53 + Date.now()/50) % canvas.height, 2, 2);
+  }
+
+  // Catcher
+  ctx.save();
+  ctx.shadowBlur = 20;
+  ctx.shadowColor = '#00ffff';
+  ctx.fillStyle = '#00ffff';
+  ctx.fillRect(catcher.x - catcher.width/2, catcher.y, catcher.width, catcher.height);
+  ctx.restore();
+
+  // Orbs
+  orbs.forEach(orb => {
+    ctx.save();
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = orb.color;
+    ctx.fillStyle = orb.color;
+    ctx.beginPath();
+    ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Particles
+  particles.forEach(p => {
+    ctx.globalAlpha = p.life / 30;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+}
+
+function gameLoop() {
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+function gameOver() {
+  gameRunning = false;
+  finalscoreEl.textContent = score;
+  gameoverEl.style.display = 'block';
+}
+
+function restart() {
+  score = 0;
+  lives = 3;
+  orbs = [];
+  particles = [];
+  speed = 2;
+  gameRunning = true;
+  gameoverEl.style.display = 'none';
+  catcher.x = 400;
+}
+
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  catcher.x = e.clientX - rect.left;
+  catcher.x = Math.max(catcher.width/2, Math.min(canvas.width - catcher.width/2, catcher.x));
+});
+
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  catcher.x = e.touches[0].clientX - rect.left;
+  catcher.x = Math.max(catcher.width/2, Math.min(canvas.width - catcher.width/2, catcher.x));
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft') catcher.x = Math.max(catcher.width/2, catcher.x - 20);
+  if (e.key === 'ArrowRight') catcher.x = Math.min(canvas.width - catcher.width/2, catcher.x + 20);
+});
+
+gameLoop();
+</script>
+</body>
+</html>
