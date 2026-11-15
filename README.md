@@ -2,21 +2,23 @@
 
 A new fun and cool browser game every day, crafted by Grok!
 
-## Today's Game: Neon Star Catcher ✨
+## Today's Game: Neon Asteroids 🚀
 
-Catch the glowing orbs with your neon paddle! Avoid the red bombs, score points, and beat your high score. Particle effects and increasing difficulty.
+Pilot your neon ship, shoot asteroids, and survive as long as you can! Larger asteroids split into smaller ones. Waves get harder.
 
 ### How to Play
-- Move with Mouse, Touch, or Arrow Keys
-- Catch cyan, magenta, yellow, and green orbs for points
-- Avoid red bombs (or miss good orbs) to lose lives
-- 3 lives, high score saved locally
+- Arrow Left/Right: Rotate
+- Arrow Up: Thrust
+- Space: Shoot
+- Avoid collisions, clear all asteroids for next wave
+- 3 lives, score based on asteroid size
 
-Open `neon-star-catcher/index.html` in your browser to play.
+Open `neon-asteroids/index.html` in your browser to play.
 
 ---
 
 ### Previous Games
+- Neon Star Catcher ✨ in `neon-star-catcher/`
 - Neon 2048 🔢 in `neon-2048/`
 - Neon Flappy 🐦 in `neon-flappy/`
 - Neon Pong 🏓 in `neon-pong/`
