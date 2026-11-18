@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Neon Runner - Daily Fun Game</title>
+<style>
+body { margin:0; background:#0a0a12; color:#0ff; font-family: 'Courier New', monospace; display:flex; flex-direction:column; align-items:center; }
+canvas { border: 2px solid #0ff; box-shadow: 0 0 20px #0ff; background: linear-gradient(#000, #001a33); }
+h1 { text-shadow: 0 0 10px #0ff; }
+#info { margin:10px; }
+button { background:#111; color:#0ff; border:1px solid #0ff; padding:8px 16px; cursor:pointer; font-family:inherit; }
+button:hover { background:#0ff; color:#000; }
+</style>
+</head>
+<body>
+<h1>🚀 Neon Runner</h1>
+<div id="info">Score: <span id="score">0</span> | High: <span id="high">0</span> | Speed: <span id="speed">1</span></div>
+<canvas id="game" width="480" height="270"></canvas>
+<div>
+<button id="start">Start / Restart</button>
+<p>Press SPACE or click to jump. Avoid the neon obstacles!</p>
+</div>
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const highEl = document.getElementById('high');
+const speedEl = document.getElementById('speed');
+const startBtn = document.getElementById('start');
+
+let gameLoop;
+let running = false;
+let score = 0;
+let high = localStorage.getItem('neonRunnerHigh') || 0;
+let speed = 1;
+let player = { x: 80, y: 180, w: 30, h: 30, vy: 0, onGround: false };
+let obstacles = [];
+let gravity = 0.6;
+let jumpPower = -12;
+let lastObstacle = 0;
+const groundY = 210;
+
+highEl.textContent = high;
+
+function reset() {
+  score = 0;
+  speed = 1;
+  player = { x: 80, y: 180, w: 30, h: 30, vy: 0, onGround: false };
+  obstacles = [];
+  lastObstacle = 0;
+  scoreEl.textContent = 0;
+  speedEl.textContent = 1;
+}
+
+function jump() {
+  if (player.onGround) {
+    player.vy = jumpPower;
+    player.onGround = false;
+  }
+}
+
+function spawnObstacle() {
+  const h = 40 + Math.random() * 40;
+  obstacles.push({
+    x: canvas.width,
+    y: groundY - h,
+    w: 20 + Math.random() * 20,
+    h: h,
+    color: `hsl(${Math.random()*360}, 100%, 60%)`
+  });
+}
+
+function update() {
+  if (!running) return;
+  // Player physics
+  player.vy += gravity;
+  player.y += player.vy;
+  if (player.y + player.h >= groundY) {
+    player.y = groundY - player.h;
+    player.vy = 0;
+    player.onGround = true;
+  }
+
+  // Obstacles
+  obstacles.forEach(o => {
+    o.x -= 4 * speed;
+  });
+  obstacles = obstacles.filter(o => o.x + o.w > 0);
+
+  // Spawn
+  lastObstacle++;
+  if (lastObstacle > 80 / speed) {
+    spawnObstacle();
+    lastObstacle = 0;
+  }
+
+  // Collision
+  for (let o of obstacles) {
+    if (player.x < o.x + o.w &&
+        player.x + player.w > o.x &&
+        player.y < o.y + o.h &&
+        player.y + player.h > o.y) {
+      gameOver();
+      return;
+    }
+  }
+
+  score += 0.1 * speed;
+  scoreEl.textContent = Math.floor(score);
+  if (score > 100 && Math.floor(score) % 50 === 0) {
+    speed = 1 + Math.floor(score / 50) * 0.2;
+    speedEl.textContent = speed.toFixed(1);
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Ground
+  ctx.strokeStyle = '#0ff';
+  ctx.beginPath();
+  ctx.moveTo(0, groundY);
+  ctx.lineTo(canvas.width, groundY);
+  ctx.stroke();
+
+  // Player (neon square with glow)
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = '#0ff';
+  ctx.fillStyle = '#0ff';
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+  ctx.shadowBlur = 0;
+
+  // Obstacles
+  obstacles.forEach(o => {
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = o.color;
+    ctx.fillStyle = o.color;
+    ctx.fillRect(o.x, o.y, o.w, o.h);
+    ctx.shadowBlur = 0;
+  });
+
+  if (!running && score > 0) {
+    ctx.fillStyle = '#fff';
+    ctx.font = '24px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER', canvas.width/2, 100);
+    ctx.font = '16px Courier New';
+    ctx.fillText('Score: ' + Math.floor(score), canvas.width/2, 130);
+  }
+}
+
+function gameOver() {
+  running = false;
+  cancelAnimationFrame(gameLoop);
+  if (score > high) {
+    high = Math.floor(score);
+    localStorage.setItem('neonRunnerHigh', high);
+    highEl.textContent = high;
+  }
+}
+
+function loop() {
+  update();
+  draw();
+  if (running) gameLoop = requestAnimationFrame(loop);
+}
+
+startBtn.onclick = () => {
+  reset();
+  running = true;
+  loop();
+};
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (!running) startBtn.click();
+    else jump();
+  }
+});
+canvas.addEventListener('click', () => {
+  if (running) jump();
+  else startBtn.click();
+});
+
+// Initial draw
+draw();
+</script>
+</body>
+</html>

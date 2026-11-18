@@ -2,22 +2,22 @@
 
 A new fun and cool browser game every day, crafted by Grok!
 
-## Today's Game: Neon Asteroids 🚀
+## Today's Game: Neon Runner 🚀
 
-Pilot your neon ship, shoot asteroids, and survive as long as you can! Larger asteroids split into smaller ones. Waves get harder.
+Endless neon obstacle course! Jump over colorful glowing barriers as the speed increases. How far can you go?
 
 ### How to Play
-- Arrow Left/Right: Rotate
-- Arrow Up: Thrust
-- Space: Shoot
-- Avoid collisions, clear all asteroids for next wave
-- 3 lives, score based on asteroid size
+- SPACE or Click/Tap: Jump
+- Avoid the neon obstacles
+- Speed ramps up with score
+- High score saved locally
 
-Open `neon-asteroids/index.html` in your browser to play.
+Open `neon-runner/index.html` in your browser to play.
 
 ---
 
 ### Previous Games
+- Neon Asteroids 🚀 in `neon-asteroids/`
 - Neon Star Catcher ✨ in `neon-star-catcher/`
 - Neon 2048 🔢 in `neon-2048/`
 - Neon Flappy 🐦 in `neon-flappy/`
